@@ -1,12 +1,19 @@
 #[macro_use]
 extern crate glium;
 
+use glium::SwapBuffersError;
 use glium::{glutin, Surface};
 
-struct GlParts {
-    display: glium::Display,
+struct GlParts<'a> {
+    display: &'a glium::Display,
     target: glium::Frame,
-    program: glium::Program,
+    program: &'a glium::Program,
+}
+
+impl<'a> GlParts<'a> {
+    fn finish(self) -> Result<(), SwapBuffersError> {
+        self.target.finish()
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -27,19 +34,15 @@ fn main() {
         None,
     ).unwrap();
     let mut closed = false;
-    let mut gl_parts = {
-        let target = display.draw();
-        GlParts {
-            display: display,
-            target: target,
-            program: program,
-        }
-    };
     while !closed {
-        gl_parts.target = gl_parts.display.draw();
+        let mut gl_parts = GlParts {
+            display: &display,
+            target: display.draw(),
+            program: &program,
+        };
         gl_parts.target.clear_color(0.0, 0.0, 1.0, 1.0);
-        render(gl_parts);
-        gl_parts.target.finish().unwrap();
+        render(&mut gl_parts);
+        gl_parts.finish().unwrap();
         events_loop.poll_events(|event| match event {
             glutin::Event::WindowEvent { event, .. } => match event {
                 glutin::WindowEvent::Closed => closed = true,
@@ -50,7 +53,7 @@ fn main() {
     }
 }
 
-fn render(gl_parts: GlParts) {
+fn render(gl_parts: &mut GlParts) {
     render_tri(
         vec![
             Vertex {
@@ -81,8 +84,8 @@ fn render(gl_parts: GlParts) {
     );
 }
 
-fn render_tri(verts: Vec<Vertex>, gl_parts: GlParts) {
-    let vertex_buffer = glium::VertexBuffer::new(&gl_parts.display, &verts).unwrap();
+fn render_tri(verts: Vec<Vertex>, gl_parts: &mut GlParts) {
+    let vertex_buffer = glium::VertexBuffer::new(gl_parts.display, &verts).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
     gl_parts
         .target
