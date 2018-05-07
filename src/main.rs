@@ -22,8 +22,8 @@ fn main() {
     let display = glium::Display::new(window, context, &events_loop).unwrap();
     let program = glium::Program::from_source(
         &display,
-        get_file_string("./pong_fe_gl/shaders/simple.vert").as_str(),
-        get_file_string("./pong_fe_gl/shaders/simple.frag").as_str(),
+        get_file_string("./shaders/simple.vert").as_str(),
+        get_file_string("./shaders/simple.frag").as_str(),
         None,
     ).unwrap();
     let mut closed = false;
